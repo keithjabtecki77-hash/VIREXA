@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Virexa Wallpapers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,Arial}
+body{background:#0f2027;color:white;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.hidden{display:none}
+
+/* LOGIN MODAL */
+#loginModal{
+  position:fixed;inset:0;background:linear-gradient(135deg,#020617,#0f2027);display:flex;align-items:center;justify-content:center;z-index:9999;
+}
+.login-box{background:rgba(0,0,0,.85);padding:30px;border-radius:20px;width:320px;text-align:center;}
+.login-box h2{margin-bottom:20px;color:#00ffd5}
+.login-box input{width:100%;padding:10px;margin:8px 0;border-radius:10px;border:none;font-size:1rem;}
+.login-box button{width:100%;padding:10px;margin-top:12px;border:none;border-radius:12px;font-weight:bold;background:linear-gradient(135deg,#00ffd5,#00c6ff);color:black;cursor:pointer;}
+.login-box p{margin-top:12px;font-size:.9rem;opacity:.8;cursor:pointer;color:#00c6ff}
+
+/* WALLPAPER SITE */
+header{display:flex;justify-content:space-between;align-items:center;padding:24px;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo svg{width:42px;height:42px;}
+.logo h1{margin:0;font-size:2rem;background:linear-gradient(90deg,#00ffd5,#00c6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+select,input,button{border-radius:14px;padding:10px;border:none;}
+button{cursor:pointer;background:linear-gradient(135deg,#00ffd5,#00c6ff);color:black;font-weight:bold;}
+
+.featured{margin:20px;border-radius:24px;overflow:hidden;position:relative;}
+.featured img{width:100%;height:340px;object-fit:cover;}
+.featured span{position:absolute;top:15px;left:15px;background:rgba(0,0,0,.6);padding:10px 16px;border-radius:14px;color:#00ffd5;font-weight:bold;}
+
+.controls{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:15px;}
+.gallery{padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
+.card{position:relative;border-radius:18px;overflow:hidden;}
+.card img{width:100%;height:260px;object-fit:cover;}
+.badge{position:absolute;top:10px;left:10px;background:black;padding:6px 10px;border-radius:10px;font-size:.8rem;}
+.fav{position:absolute;top:10px;right:10px;font-size:1.6rem;cursor:pointer;}
+.actions{position:absolute;bottom:10px;right:10px;}
+.actions button{background:rgba(0,0,0,.7);color:#00ffd5;border:none;padding:8px 14px;border-radius:12px;font-weight:bold;cursor:pointer;}
+
+.preview{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:999;}
+.preview img{max-width:90%;max-height:80%;border-radius:20px;}
+.preview .close{position:absolute;top:20px;right:25px;font-size:2rem;cursor:pointer;}
+.preview .buttons{margin-top:16px;text-align:center;}
+.preview button{margin:6px;padding:14px 22px;border-radius:16px;border:none;font-weight:bold;background:linear-gradient(135deg,#00ffd5,#00c6ff);color:black;cursor:pointer;}
+
+footer{text-align:center;padding:20px;opacity:.5;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal">
+  <div class="login-box" id="loginBox">
+    <h2>Login to Virexa</h2>
+    <input type="text" id="loginUser" placeholder="Username" />
+    <input type="password" id="loginPass" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <p onclick="showSignUp()">Don't have an account? Sign Up</p>
+  </div>
+  <div class="login-box hidden" id="signUpBox">
+    <h2>Create Account</h2>
+    <input type="text" id="signupUser" placeholder="Username" />
+    <input type="password" id="signupPass" placeholder="Password" />
+    <button onclick="signUp()">Sign Up</button>
+    <p onclick="showLogin()">Already have an account? Login</p>
+  </div>
+</div>
+
+<!-- WALLPAPER SITE -->
+<div id="site" class="hidden" style="width:100%;max-width:1200px;">
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="44" stroke="#00ffd5" stroke-width="6"/><path d="M30 60L50 30L70 60" stroke="#00c6ff" stroke-width="6"/></svg>
+    <h1>Virexa</h1>
+  </div>
+  <select>
+    <option>🌍 English</option>
+    <option>Español</option>
+    <option>Français</option>
+    <option>Deutsch</option>
+    <option>العربية</option>
+    <option>中文</option>
+    <option>日本語</option>
+    <option>한국어</option>
+    <option>Português</option>
+    <option>Русский</option>
+  </select>
+</header>
+
+<div class="featured"><span>🌟 Wallpaper of the Day</span><img id="featured"></div>
+
+<div class="controls">
+  <input id="q" placeholder="Search wallpapers">
+  <select id="cat">
+    <option value="">All</option>
+    <option>anime</option>
+    <option>luxury</option>
+    <option>nature</option>
+    <option>cars</option>
+    <option>space</option>
+    <option>technology</option>
+    <option>avatar</option>
+  </select>
+  <select id="res">
+    <option value="">Any quality</option>
+    <option value="4k">4K only</option>
+  </select>
+  <button onclick="search()">Search</button>
+  <button onclick="showFavs()">❤️ Favorites</button>
+</div>
+
+<div class="gallery" id="gallery"></div>
+
+<footer>© 2026 Virexa Wallpapers • Premium 4K</footer>
+
+<div class="preview" id="preview">
+  <span class="close" onclick="preview.style.display='none'">✖</span>
+  <div>
+    <img id="pimg">
+    <div class="buttons">
+      <button onclick="downloadImage()">⬇ Download</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+/* ---------------- ACCOUNTS ---------------- */
+function signUp(){
+  const u=document.getElementById("signupUser").value.trim();
+  const p=document.getElementById("signupPass").value.trim();
+  if(!u||!p){alert("Enter username and password"); return;}
+  let accounts=JSON.parse(localStorage.getItem("accounts")||"{}");
+  if(accounts[u]){alert("Username already exists"); return;}
+  accounts[u]=p;
+  localStorage.setItem("accounts",JSON.stringify(accounts));
+  alert("Account created! Please login.");
+  showLogin();
+}
+
+function login(){
+  const u=document.getElementById("loginUser").value.trim();
+  const p=document.getElementById("loginPass").value.trim();
+  let accounts=JSON.parse(localStorage.getItem("accounts")||"{}");
+  if(accounts[u] && accounts[u]===p){
+    localStorage.setItem("loggedInUser",u);
+    document.getElementById("loginModal").style.display="none";
+    document.getElementById("site").classList.remove("hidden");
+    load(true);
+  }else{alert("Invalid username or password");}
+}
+
+function showSignUp(){
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("signUpBox").classList.remove("hidden");
+}
+function showLogin(){
+  document.getElementById("signUpBox").classList.add("hidden");
+  document.getElementById("loginBox").classList.remove("hidden");
+}
+
+/* ---------------- WALLPAPER ---------------- */
+const API_KEY="vyynP2WUKfkwPr0BvwJcgRAMxSTkxZ9ZEhdiWBp5q17g2MxAtw4Qlsnx";
+let page=1, query="wallpaper", currentImg="";
+const gallery=document.getElementById("gallery");
+const res=document.getElementById("res");
+let favs=[];
+
+async function load(reset=false){
+ if(reset){page=1;gallery.innerHTML=""}
+ try{
+   const r=await fetch(`https://api.pexels.com/v1/search?query=${query}&per_page=15&page=${page}`,{headers:{Authorization:API_KEY}});
+   const d=await r.json();
+   d.photos.forEach(p=>{
+     if(res.value==="4k" && p.width<3840) return;
+     const c=document.createElement("div");
+     c.className="card";
+     c.innerHTML=`<span class="badge">${p.width}×${p.height}</span>
+       <span class="fav">🤍</span>
+       <img src="${p.src.large}" onclick="openPreview('${p.src.original}')">
+       <div class="actions"><button onclick="instantDownload('${p.src.original}')">⬇</button></div>`;
+     c.querySelector(".fav").onclick=()=>{
+       const user=localStorage.getItem("loggedInUser");
+       if(!user){alert("Please login first"); return;}
+       if(favs.includes(p.id)){favs=favs.filter(f=>f!==p.id);}
+       else{favs.push(p.id);}
+       c.querySelector(".fav").textContent=favs.includes(p.id)?"❤️":"🤍";
+       localStorage.setItem("fav_"+user,JSON.stringify(favs));
+     };
+     gallery.appendChild(c);
+   });
+ }catch(e){console.error(e);}
+}
+
+function search(){ query=[q.value,cat.value].filter(Boolean).join(" ")||"wallpaper"; load(true); }
+function showFavs(){
+  gallery.innerHTML="";
+  const user=localStorage.getItem("loggedInUser");
+  if(!user){alert("Please login first"); return;}
+  favs=JSON.parse(localStorage.getItem("fav_"+user)||"[]");
+  favs.forEach(async id=>{
+    const r=await fetch(`https://api.pexels.com/v1/photos/${id}`,{headers:{Authorization:API_KEY}});
+    const p=await r.json();
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`<img src="${p.src.large}" onclick="openPreview('${p.src.original}')"><div class="actions"><button onclick="instantDownload('${p.src.original}')">⬇</button></div>`;
+    gallery.appendChild(c);
+  });
+}
+
+/* ---------------- PREVIEW & DOWNLOAD ---------------- */
+function openPreview(src){ currentImg=src; pimg.src=src; preview.style.display="flex"; }
+async function instantDownload(url){
+  try{
+    const response=await fetch(url);
+    const blob=await response.blob();
+    const blobUrl=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=blobUrl;
+    a.download="virexa-wallpaper.jpg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  }catch(e){alert("Download failed.");}
+}
+function downloadImage(){ instantDownload(currentImg); }
+
+/* ---------------- FEATURED ---------------- */
+document.getElementById("featured").src=`https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?sig=${new Date().getDate()}`;
+
+/* ---------------- INFINITE SCROLL ---------------- */
+window.addEventListener("scroll",()=>{if(innerHeight+scrollY>=document.body.offsetHeight-150){page++;load();}});
+</script>
+
+</body>
+</html> 
