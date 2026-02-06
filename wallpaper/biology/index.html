@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Biology App - 70 Pages</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body { margin:0; font-family: Arial,sans-serif; background:#f2f5f7; }
+header { background:#1b5e20; color:white; text-align:center; padding:15px; }
+nav { display:flex; gap:5px; padding:10px; background:#e0e0e0; }
+nav button { flex:1; border:none; padding:10px; background:#4caf50; color:white; border-radius:6px; }
+#searchBox { width:100%; padding:10px; font-size:16px; border:none; }
+main { padding:15px; }
+h2 { color:#2e7d32; }
+.controls { display:flex; justify-content:space-between; margin-top:20px; }
+.controls button { padding:10px 15px; background:#2e7d32; color:white; border:none; border-radius:6px; }
+canvas { border:2px solid black; background:white; margin-top:10px; }
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>📘 Biology Complete App</h1>
+<p>Secondary → University (70 Pages)</p>
+</header>
+
+<input id="searchBox" placeholder="🔍 Search biology topics..." onkeyup="searchContent()">
+
+<nav>
+<button onclick="showPageContent()">📄 Content</button>
+<button onclick="showDraw()">✏️ Diagrams</button>
+</nav>
+
+<main>
+<div id="content"></div>
+
+<div class="controls">
+<button onclick="prevPage()">⬅ Previous</button>
+<span id="pageNumber"></span>
+<button onclick="nextPage()">Next ➡</button>
+</div>
+
+<div id="drawSection" style="display:none;">
+<h2>Sketch Biology Diagrams</h2>
+<p>Use your mouse/finger to draw diagrams.</p>
+<canvas id="canvas" width="300" height="300"></canvas><br><br>
+<button onclick="clearCanvas()">Clear</button>
+</div>
+</main>
+
+<script>
+// ===== PAGE DATA =====
+let currentPage = 1;
+
+const pages = [
+  // Page 1
+  {title:"Page 1: Living & Non-Living Things",
+   body:`<p><b>Definition:</b> Living things carry out life processes like growth, respiration, nutrition, excretion, and reproduction. Non-living things do not.</p>
+<ul><li>Living: humans, animals, plants</li><li>Non-living: stone, water, table</li></ul>
+<p><b>Diagram Instructions:</b> Draw a plant labeled "Living" and a stone labeled "Non-Living".</p>
+<h3>Exam Questions:</h3><ol>
+<li>Define living things.</li>
+<li>List three differences between living and non-living things.</li>
+</ol>
+<h3>Answers:</h3><ol>
+<li>Living things are organisms that carry out life processes.</li>
+<li>Living things grow, respire, and reproduce; non-living things do not.</li></ol>`},
+
+  // Page 2
+  {title:"Page 2: Characteristics of Living Things (MRS GREN)",
+   body:`<p>All living things share characteristics known as MRS GREN: Movement, Respiration, Sensitivity, Growth, Reproduction, Excretion, Nutrition.</p>
+<p><b>Diagram Instructions:</b> Draw a human for Movement, lungs for Respiration, a plant bending towards light for Sensitivity, a growing plant for Growth.</p>
+<h3>Exam Questions:</h3><ol>
+<li>State what MRS GREN stands for.</li>
+<li>Give two examples of each characteristic.</li></ol>
+<h3>Answers:</h3><ol>
+<li>Movement, Respiration, Sensitivity, Growth, Reproduction, Excretion, Nutrition</li>
+<li>Examples: Movement – animals moving; Respiration – lungs, mitochondria; etc.</li></ol>`},
+
+  // Page 3
+  {title:"Page 3: Classification of Living Organisms",
+   body:`<p>Living organisms are classified into five kingdoms: Animalia, Plantae, Fungi, Protista, Monera.</p>
+<p><b>Diagram Instructions:</b> Draw a tree showing the five kingdoms.</p>
+<h3>Exam Questions:</h3><ol>
+<li>List the five kingdoms of living organisms.</li>
+<li>State one characteristic of each kingdom.</li></ol>
+<h3>Answers:</h3><ol>
+<li>Animalia, Plantae, Fungi, Protista, Monera</li>
+<li>Animalia – multicellular animals; Plantae – multicellular plants; Fungi – decomposers; Protista – unicellular eukaryotes; Monera – prokaryotes.</li></ol>`},
+
+  // Page 4
+  {title:"Page 4: Cell Structure",
+   body:`<p>The cell is the basic structural and functional unit of all living organisms. Cells may be <b>prokaryotic</b> (no nucleus) or <b>eukaryotic</b> (nucleus present).</p>
+<ul>
+<li><b>Nucleus:</b> Controls cell activities; stores DNA.</li>
+<li><b>Cell Membrane:</b> Controls substance movement.</li>
+<li><b>Mitochondria:</b> Site of respiration; produces energy.</li>
+<li><b>Chloroplast:</b> Photosynthesis in plants.</li>
+<li><b>Ribosomes:</b> Protein synthesis.</li>
+</ul>
+<p><b>Diagram Instructions:</b> Sketch a plant cell and label Nucleus, Cell Membrane, Mitochondria, Chloroplast, Ribosomes.</p>
+<h3>Exam Questions:</h3><ol>
+<li>Differentiate prokaryotic and eukaryotic cells.</li>
+<li>Draw and label a plant cell.</li></ol>
+<h3>Answers:</h3><ol>
+<li>Prokaryotic cells have no nucleus; eukaryotic cells have a nucleus.</li>
+<li>Sketch showing all organelles labeled.</li></ol>`},
+
+// Pages 5-70 generated automatically as examples
+];
+
+const secondaryTopics = [
+"Nutrition in Plants","Nutrition in Animals","Photosynthesis","Respiration","Transport in Plants","Transport in Animals","Excretion","Homeostasis","Support & Movement","Skeletal System","Muscular System","Nervous System","Endocrine System","Reproduction in Plants","Reproduction in Animals","Growth & Development","Ecology","Food Chain & Web","Population","Soil & Water","Adaptation","Variation","Heredity","Genetics (Intro & Mendel’s Work)","Microorganisms & Diseases"
+];
+
+const universityTopics = [
+"Advanced Cell Biology","Cell Membrane & Transport","Cell Cycle & Mitosis","Meiosis","Molecular Biology (DNA & RNA)","Protein Synthesis","Biochemistry Basics","Enzymes & Metabolism","Microbiology (Bacteria & Viruses)","Fungi & Protozoa","Parasitology","Immunology","Ecology (Advanced)","Population Ecology","Evolution & Natural Selection","Taxonomy & Classification","Plant Physiology","Animal Physiology","Photosynthesis (Advanced)","Respiration (Advanced)","Nervous Coordination","Hormonal Control","Reproductive Biology","Developmental Biology","Biotechnology","Genetic Engineering","Bioinformatics","Environmental Biology","Conservation Biology","Climate Change","Toxicology Basics","Research Methods","Microscopy & Lab Safety","Field Biology","Revision 1","Revision 2","Revision 3","WAEC Practice","JAMB Practice","University Past Questions"
+];
+
+// Fill remaining pages 5-70
+let pageNumber = 5;
+for(let i=0;i<secondaryTopics.length;i++){
+  pages.push({
+    title:`Page ${pageNumber}: ${secondaryTopics[i]}`,
+    body:`<p><b>${secondaryTopics[i]}</b> explained in detail here.</p>
+<p><b>Diagram Instructions:</b> Sketch main concept of ${secondaryTopics[i]}.</p>
+<h3>Exam Questions:</h3><ol>
+<li>Explain ${secondaryTopics[i]}.</li>
+<li>Give an example related to ${secondaryTopics[i]}.</li></ol>
+<h3>Answers:</h3><ol>
+<li>${secondaryTopics[i]} explanation here.</li>
+<li>Example of ${secondaryTopics[i]}.</li></ol>`
+  });
+  pageNumber++;
+}
+
+for(let i=0;i<universityTopics.length;i++){
+  pages.push({
+    title:`Page ${pageNumber}: ${universityTopics[i]}`,
+    body:`<p><b>${universityTopics[i]}</b> explained in detail here.</p>
+<p><b>Diagram Instructions:</b> Sketch main concept of ${universityTopics[i]}.</p>
+<h3>Exam Questions:</h3><ol>
+<li>Explain ${universityTopics[i]}.</li>
+<li>Give an example related to ${universityTopics[i]}.</li></ol>
+<h3>Answers:</h3><ol>
+<li>${universityTopics[i]} explanation here.</li>
+<li>Example of ${universityTopics[i]}.</li></ol>`
+  });
+  pageNumber++;
+}
+
+// ===== RENDER PAGE =====
+function renderPage(){
+  const page = pages[currentPage-1];
+  document.getElementById("content").innerHTML = `<h2>${page.title}</h2>${page.body}`;
+  document.getElementById("pageNumber").innerText = `Page ${currentPage} of 70`;
+}
+
+// ===== NAVIGATION =====
+function nextPage(){ if(currentPage<70){currentPage++; showPageContent();} }
+function prevPage(){ if(currentPage>1){currentPage--; showPageContent();} }
+function showPageContent(){ document.getElementById("drawSection").style.display="none"; renderPage();}
+function showDraw(){ document.getElementById("content").innerHTML=""; document.getElementById("drawSection").style.display="block";}
+
+// ===== SEARCH =====
+function searchContent(){
+  const text = document.getElementById("searchBox").value.toLowerCase();
+  for(let i=0;i<pages.length;i++){
+    if(pages[i].title.toLowerCase().includes(text) || pages[i].body.toLowerCase().includes(text)){
+      currentPage=i+1;
+      showPageContent();
+      break;
+    }
+  }
+}
+
+// ===== CANVAS DRAWING =====
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+let drawing=false;
+canvas.addEventListener("mousedown",()=>drawing=true);
+canvas.addEventListener("mouseup",()=>drawing=false);
+canvas.addEventListener("mousemove",e=>{if(!drawing)return; ctx.lineWidth=2; ctx.lineCap="round"; ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke();});
+function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
+
+// INITIAL RENDER
+renderPage();
+</script>
+
+</body>
+</html>

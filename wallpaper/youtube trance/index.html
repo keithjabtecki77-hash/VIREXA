@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Movie Translator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  margin:0;
+  font-family:system-ui,Arial;
+  background:linear-gradient(135deg,#020617,#0f172a);
+  color:white;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+.container {
+  width:100%; max-width:500px; padding:24px;
+}
+h1 {
+  text-align:center;
+  background:linear-gradient(90deg,#38bdf8,#22d3ee);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+input, select, button {
+  width:100%; padding:14px; margin-top:12px;
+  border-radius:14px; border:none; font-size:1rem;
+}
+button {
+  background:linear-gradient(90deg,#38bdf8,#22d3ee);
+  font-weight:bold; cursor:pointer;
+}
+pre {
+  background:#020617; padding:14px; border-radius:14px;
+  margin-top:12px; max-height:250px; overflow:auto; white-space:pre-wrap;
+}
+.footer {text-align:center; margin-top:12px; font-size:.8rem; opacity:.6;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Movie Translator</h1>
+<input id="url" placeholder="Paste YouTube video link">
+<select id="lang">
+<option value="es">Spanish</option>
+<option value="fr">French</option>
+<option value="de">German</option>
+<option value="hi">Hindi</option>
+<option value="zh">Chinese</option>
+</select>
+<button onclick="translate()">Translate & Download</button>
+<pre id="output">Your translation will appear here</pre>
+<div class="footer">Offline cache of last translation saved</div>
+</div>
+
+<script>
+async function translate(){
+  const url = document.getElementById("url").value.trim();
+  const lang = document.getElementById("lang").value;
+  const output = document.getElementById("output");
+  if(!url){alert("Paste YouTube URL"); return;}
+  output.textContent="Translating...";
+
+  try{
+    const res = await fetch("http://localhost:3000/translate",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({url, lang})
+    });
+    const data = await res.json();
+    if(data.error){output.textContent="Error: "+data.error; return;}
+
+    const finalText = data.translated.join("\n");
+    output.textContent = finalText;
+    localStorage.setItem("lastResult", finalText);
+
+    // Download translated text
+    const blob = new Blob([finalText], {type:"text/plain"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "Movie-Translation.txt";
+    a.click();
+
+  }catch(err){
+    output.textContent="Error connecting to backend. Last cached translation:\n"+(localStorage.getItem("lastResult")||"None");
+  }
+}
+
+// Load last cached translation
+if(localStorage.getItem("lastResult")){
+  document.getElementById("output").textContent = localStorage.getItem("lastResult");
+}
+</script>
+</body>
+</html>

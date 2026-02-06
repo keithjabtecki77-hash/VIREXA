@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ad Video Generator</title>
+<style>
+body { font-family: Arial; text-align: center; background: #222; color: white; padding: 20px; }
+input, textarea, button { margin: 10px; padding: 10px; font-size: 16px; }
+#preview img { max-width: 100px; margin: 5px; }
+</style>
+</head>
+<body>
+
+<h1>Ad Video Generator</h1>
+
+<input type="file" id="images" multiple accept="image/*"><br>
+<textarea id="descriptions" rows="5" cols="50" placeholder="Enter one description per image, separated by new line"></textarea><br>
+<button id="generate">Generate Video</button>
+
+<h2>Preview</h2>
+<div id="preview"></div>
+
+<h2>Download</h2>
+<a id="downloadLink" href="#" download="ad_video.webm" style="display:none;">Download Video</a>
+
+<canvas id="canvas" width="720" height="1280" style="display:none;"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/whammy@0.2.5/whammy.js"></script>
+<script>
+const imagesInput = document.getElementById('images');
+const descriptionsInput = document.getElementById('descriptions');
+const previewDiv = document.getElementById('preview');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const generateBtn = document.getElementById('generate');
+const downloadLink = document.getElementById('downloadLink');
+
+generateBtn.onclick = async () => {
+    const files = imagesInput.files;
+    const descriptions = descriptionsInput.value.split('\n').map(d => d.trim());
+
+    if (!files.length) return alert("Please select images");
+    if (files.length !== descriptions.length) return alert("Number of descriptions must match images");
+
+    // Preview
+    previewDiv.innerHTML = '';
+    for (let f of files) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        previewDiv.appendChild(img);
+    }
+
+    // Load all images
+    const loadedImages = await Promise.all(Array.from(files).map(file => {
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.src = URL.createObjectURL(file);
+        });
+    }));
+
+    // Create video
+    const video = new Whammy.Video(30); // 30 FPS
+    for (let i = 0; i < loadedImages.length; i++) {
+        const img = loadedImages[i];
+        const text = descriptions[i];
+
+        for (let j = 0; j < 90; j++) { // 3 seconds * 30 FPS
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw image
+            const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+            const w = img.width * scale;
+            const h = img.height * scale;
+            ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+            // Draw text
+            ctx.fillStyle = "white";
+            ctx.font = "60px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(text, canvas.width / 2, canvas.height - 100);
+            video.add(ctx);
+        }
+    }
+
+    const output = video.compile();
+    const url = URL.createObjectURL(output);
+    downloadLink.href = url;
+    downloadLink.style.display = 'inline';
+};
+</script>
+
+</body>
+</html>
