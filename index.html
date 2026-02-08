@@ -90,10 +90,23 @@ footer{text-align:center;padding:20px;opacity:.5;}
     <option>한국어</option>
     <option>Português</option>
     <option>Русский</option>
-  </select>
+  </select><nav style="display:flex;gap:14px;font-size:.9rem;">
+  <a href="#" onclick="openPage('about')" style="color:#00ffd5">About</a>
+  <a href="#" onclick="openPage('privacy')" style="color:#00ffd5">Privacy</a>
+  <a href="#" onclick="openPage('terms')" style="color:#00ffd5">Terms</a>
+  <a href="#" onclick="openPage('contact')" style="color:#00ffd5">Contact</a>
+</nav>
+
+
 </header>
 
-<div class="featured"><span>🌟 Wallpaper of the Day</span><img id="featured"></div>
+<div class="featured"><span>🌟 Wal<nav style="display:flex;gap:14px;font-size:.9rem;">
+  <a href="#" onclick="openPage('about')" style="color:#00ffd5">About</a>
+  <a href="#" onclick="openPage('privacy')" style="color:#00ffd5">Privacy</a>
+  <a href="#" onclick="openPage('terms')" style="color:#00ffd5">Terms</a>
+  <a href="#" onclick="openPage('contact')" style="color:#00ffd5">Contact</a>
+</nav>
+lpaper of the Day</span><img id="featured"></div>
 
 <div class="controls">
   <input id="q" placeholder="Search wallpapers">
@@ -238,6 +251,53 @@ document.getElementById("featured").src=`https://images.unsplash.com/photo-15005
 /* ---------------- INFINITE SCROLL ---------------- */
 window.addEventListener("scroll",()=>{if(innerHeight+scrollY>=document.body.offsetHeight-150){page++;load();}});
 </script>
+<script>
+window.addEventListener("scroll",()=>{if(innerHeight+scrollY>=document.body.offsetHeight-150){page++;load();}});
+
+// ---------------- INFO PAGES JS ----------------
+function openPage(page){
+  const box=document.getElementById("infoPage");
+  const content=document.getElementById("infoContent");
+  box.style.display="block";
+
+  if(page==="about"){
+    content.innerHTML=`
+    <h1>About Virexa Wallpapers</h1>
+    <p>Virexa Wallpapers provides high-quality 4K wallpapers across different categories like nature, cars, anime, space, and technology.</p>`;
+  }
+
+  if(page==="privacy"){
+    content.innerHTML=`
+    <h1>Privacy Policy</h1>
+    <p>We respect your privacy. We only store your username locally in your browser.</p>
+    <p>Google AdSense may use cookies to show ads.</p>`;
+  }
+
+  if(page==="terms"){
+    content.innerHTML=`
+    <h1>Terms & Conditions</h1>
+    <p>Images belong to their respective owners from Pexels API.</p>
+    <p>Use wallpapers for personal use only.</p>`;
+  }
+
+  if(page==="contact"){
+    content.innerHTML=`
+    <h1>Contact Us</h1>
+    <p>Email: support@virexa.site</p>`;
+  }
+}
+
+function closePage(){
+  document.getElementById("infoPage").style.display="none";
+}
+</script>
+
+<!-- INFO PAGES DIV -->
+<div id="infoPage" style="display:none;position:fixed;inset:0;background:#0b1220;color:white;overflow:auto;padding:40px;z-index:2000;">
+  <button onclick="closePage()" style="position:fixed;top:20px;right:20px;padding:10px 16px;border:none;border-radius:10px;background:#00ffd5;color:black;font-weight:bold;">Close</button>
+  <div id="infoContent" style="max-width:900px;margin:auto;line-height:1.7;font-size:1rem;"></div>
+</div>
 
 </body>
-</html> 
+</html>
+ 
