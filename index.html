@@ -2,238 +2,463 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>Virexa Editor & Wallpapers</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Virexa Studio</title>
 
-<meta name="google-adsense-account" content="ca-pub-2665946978630569">
+<!-- Google AdSense -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2665946978630569" crossorigin="anonymous"></script>
 
+<!-- FFmpeg for Video Editing -->
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/ffmpeg.min.js"></script>
+
+<!-- Fabric.js for Canvas / Image Editing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
+
 <style>
-body{margin:0;font-family:Arial;background:#0b1220;color:white}
-header{display:flex;justify-content:space-between;align-items:center;padding:15px 30px;background:#0f172a}
-.logo{font-size:22px;color:#00ffd5;font-weight:bold}
-nav button{margin-left:10px;padding:8px 14px;border:none;border-radius:8px;background:#00ffd5;color:black;cursor:pointer}
-.search{text-align:center;padding:20px}
-.search input{width:60%;padding:10px;border-radius:8px;border:none}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:15px;padding:20px}
-.gallery img,.gallery video{width:100%;border-radius:12px;cursor:pointer}
-.preview{display:none;position:fixed;inset:0;background:#000c;align-items:center;justify-content:center;flex-direction:column;z-index:1000}
-.preview img,.preview video{max-width:90%;max-height:70vh;border-radius:20px}
-.preview button{margin:8px;padding:10px 20px;border:none;border-radius:10px;background:#00ffd5;color:black;font-weight:bold}
-#editor{display:none;position:fixed;inset:0;background:#000;z-index:2000;color:white}
-canvas{background:#111;border-radius:12px}
-.tools button,.tools select,.tools input{margin:5px;padding:8px;border-radius:6px;border:none}
-#layers div{background:#222;margin:4px;padding:6px;border-radius:6px;cursor:pointer}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,Arial}
+body{background:#0f2027;color:white;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;}
+.hidden{display:none}
+
+/* LOGIN MODAL */
+#loginModal{position:fixed;inset:0;background:linear-gradient(135deg,#020617,#0f2027);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-box{background:rgba(0,0,0,.85);padding:30px;border-radius:20px;width:320px;text-align:center;}
+.login-box h2{margin-bottom:20px;color:#00ffd5}
+.login-box input{width:100%;padding:10px;margin:8px 0;border-radius:10px;border:none;font-size:1rem;}
+.login-box button{width:100%;padding:10px;margin-top:12px;border:none;border-radius:12px;font-weight:bold;background:linear-gradient(135deg,#00ffd5,#00c6ff);color:black;cursor:pointer;}
+.login-box p{margin-top:12px;font-size:.9rem;opacity:.8;cursor:pointer;color:#00c6ff}
+
+/* HEADER */
+header{display:flex;justify-content:space-between;align-items:center;padding:24px;width:100%;max-width:1200px;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo svg{width:42px;height:42px;}
+.logo h1{margin:0;font-size:2rem;background:linear-gradient(90deg,#00ffd5,#00c6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+select,input,button{border-radius:14px;padding:10px;border:none;}
+button{cursor:pointer;background:linear-gradient(135deg,#00ffd5,#00c6ff);color:black;font-weight:bold;}
+
+/* GALLERY */
+.featured{margin:20px;border-radius:24px;overflow:hidden;position:relative;width:90%;max-width:800px;}
+.featured img{width:100%;height:340px;object-fit:cover;}
+.featured span{position:absolute;top:15px;left:15px;background:rgba(0,0,0,.6);padding:10px 16px;border-radius:14px;color:#00ffd5;font-weight:bold;}
+
+.controls{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:15px;width:90%;max-width:1200px;}
+.gallery{padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;width:90%;max-width:1200px;}
+.card{position:relative;border-radius:18px;overflow:hidden;}
+.card img{width:100%;height:260px;object-fit:cover;}
+.badge{position:absolute;top:10px;left:10px;background:black;padding:6px 10px;border-radius:10px;font-size:.8rem;}
+.fav{position:absolute;top:10px;right:10px;font-size:1.6rem;cursor:pointer;}
+.actions{position:absolute;bottom:10px;right:10px;}
+.actions button{background:rgba(0,0,0,.7);color:#00ffd5;border:none;padding:8px 14px;border-radius:12px;font-weight:bold;cursor:pointer;}
+
+.preview{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:999;}
+.preview img{max-width:90%;max-height:80%;border-radius:20px;}
+.preview .close{position:absolute;top:20px;right:25px;font-size:2rem;cursor:pointer;}
+.preview .buttons{margin-top:16px;text-align:center;}
+.preview button{margin:6px;padding:14px 22px;border-radius:16px;border:none;font-weight:bold;background:linear-gradient(135deg,#00ffd5,#00c6ff);color:black;cursor:pointer;}
+
+footer{text-align:center;padding:20px;opacity:.5;}
+
+/* VIDEO EDITOR */
+#videoEditor{display:none;flex-direction:column;align-items:center;width:100%;max-width:1200px;padding:20px;}
+#videoCanvas{border:2px solid #00c6ff;border-radius:16px;width:100%;max-width:800px;height:450px;background:#111;}
+#editorTools{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;}
+#editorTools input[type="file"]{display:block;}
+
+/* IMAGE EDITOR */
+#imageEditor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column;z-index:9999;padding:20px;}
+#imageEditor canvas{border:2px solid #00c6ff;border-radius:16px;margin-bottom:15px;}
+#imageEditor .tools{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:10px;}
+#imageEditor .tools button{padding:8px 14px;font-weight:bold;background:linear-gradient(135deg,#00ffd5,#00c6ff);color:black;border:none;border-radius:12px;cursor:pointer;}
+.closeEditor{position:absolute;top:15px;right:25px;font-size:2rem;cursor:pointer;color:#00ffd5;}
+
+/* FOOTER LINKS */
+.footer-links{background:#020617;color:white;width:100%;padding:40px 20px;display:flex;flex-wrap:wrap;justify-content:center;gap:60px;}
+.footer-links h3{color:#00ffd5;margin-bottom:12px;}
+.footer-links ul{list-style:none;line-height:1.8;padding:0;}
+.footer-links ul li a{color:white;text-decoration:none;}
+.footer-links ul li a:hover{color:#00c6ff;}
 </style>
 </head>
-
 <body>
 
+<!-- LOGIN MODAL -->
+<div id="loginModal">
+  <div class="login-box" id="loginBox">
+    <h2>Login to Virexa</h2>
+    <input type="text" id="loginUser" placeholder="Username" />
+    <input type="password" id="loginPass" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <p onclick="showSignUp()">Don't have an account? Sign Up</p>
+  </div>
+  <div class="login-box hidden" id="signUpBox">
+    <h2>Create Account</h2>
+    <input type="text" id="signupUser" placeholder="Username" />
+    <input type="password" id="signupPass" placeholder="Password" />
+    <button onclick="signUp()">Sign Up</button>
+    <p onclick="showLogin()">Already have an account? Login</p>
+  </div>
+</div>
+
+<!-- MAIN SITE -->
+<div id="site" class="hidden">
+
 <header>
-<div class="logo">Virexa Studio</div>
-<nav>
-<button onclick="loadImages()">Wallpapers</button>
-<button onclick="loadVideos()">Videos</button>
-</nav>
+  <div class="logo">
+    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="44" stroke="#00ffd5" stroke-width="6"/><path d="M30 60L50 30L70 60" stroke="#00c6ff" stroke-width="6"/></svg>
+    <h1>Virexa</h1>
+  </div>
+  <select>
+    <option>🌍 English</option>
+    <option>Español</option>
+    <option>Français</option>
+    <option>Deutsch</option>
+    <option>العربية</option>
+    <option>中文</option>
+    <option>日本語</option>
+    <option>한국어</option>
+    <option>Português</option>
+    <option>Русский</option>
+  </select>
 </header>
 
-<div class="search">
-<input id="searchBox" placeholder="Search anything...">
-<button onclick="search()">Search</button>
+<nav style="display:flex;gap:14px;font-size:.9rem;justify-content:center;margin-bottom:10px;">
+  <a href="#" onclick="openPage('about')" style="color:#00ffd5">About</a>
+  <a href="#" onclick="openPage('privacy')" style="color:#00ffd5">Privacy</a>
+  <a href="#" onclick="openPage('terms')" style="color:#00ffd5">Terms</a>
+  <a href="#" onclick="openPage('contact')" style="color:#00ffd5">Contact</a>
+</nav>
+
+<div class="controls">
+  <input id="q" placeholder="Search wallpapers">
+  <select id="cat">
+    <option value="">All</option>
+    <option>anime</option>
+    <option>luxury</option>
+    <option>nature</option>
+    <option>cars</option>
+    <option>space</option>
+    <option>technology</option>
+    <option>avatar</option>
+  </select>
+  <select id="res">
+    <option value="">Any quality</option>
+    <option value="4k">4K only</option>
+  </select>
+  <button onclick="search()">Search</button>
+  <button onclick="showFavs()">❤️ Favorites</button>
+  <button onclick="openVideoEditor()">🎬 Video Editor</button>
+  <button onclick="openImageEditor()">🖼️ Image Editor</button>
 </div>
 
+<div class="featured"><span>🌟 Wallpaper of the Day</span><img id="featured"></div>
 <div class="gallery" id="gallery"></div>
 
-<!-- PREVIEW -->
+<!-- VIDEO EDITOR -->
+<div id="videoEditor">
+  <h2>Video Editor</h2>
+  <canvas id="videoCanvas"></canvas>
+  <div id="editorTools">
+    <input type="file" id="uploadVideo" accept="video/*">
+    <button onclick="exportVideo()">Download Video</button>
+    <button onclick="closeVideoEditor()">Close Editor</button>
+  </div>
+</div>
+
+<!-- IMAGE EDITOR -->
+<div id="imageEditor">
+  <span class="closeEditor" onclick="closeImageEditor()">✖</span>
+  <canvas id="imgCanvas" width="800" height="450"></canvas>
+  <div class="tools">
+    <input type="file" id="uploadImage" accept="image/*">
+    <button onclick="startCrop()">Crop</button>
+    <button onclick="rotateImage()">Rotate 90°</button>
+    <button onclick="flipImage()">Flip</button>
+    <button onclick="addText()">Add Text</button>
+    <button onclick="removeBg()">Remove BG</button>
+    <button onclick="applyCrop()">Apply Crop</button>
+    <button onclick="downloadEditedImage()">Download</button>
+    <button onclick="closeImageEditor()">Close Editor</button>
+  </div>
+</div>
+
+<!-- PREVIEW IMAGE -->
 <div class="preview" id="preview">
-<div id="prevHolder"></div>
-<button onclick="downloadFile()">⬇ Download</button>
-<button onclick="openEditor()">🎨 Edit</button>
-<button onclick="closePreview()">Close</button>
+  <span class="close" onclick="preview.style.display='none'">✖</span>
+  <div>
+    <img id="pimg">
+    <div class="buttons">
+      <button onclick="downloadImage()">⬇ Download</button>
+    </div>
+  </div>
 </div>
 
-<!-- EDITOR -->
-<div id="editor">
-<div style="display:flex;height:100%">
-<div style="flex:4;display:flex;flex-direction:column;align-items:center;justify-content:center">
-<canvas id="canvas" width="900" height="500"></canvas>
-
-<div class="tools">
-<button onclick="addText()">Text</button>
-<button onclick="addSticker('🔥')">🔥</button>
-<button onclick="addSticker('⭐')">⭐</button>
-<input type="color" id="colorPicker" value="#00ffd5">
-<select id="fontSelect">
-<option>Arial</option>
-<option>Impact</option>
-<option>Georgia</option>
-<option>Verdana</option>
-<option>Courier New</option>
-</select>
-<button onclick="undo()">Undo</button>
-<button onclick="redo()">Redo</button>
-<button onclick="downloadEdited()">Download</button>
-<button onclick="closeEditor()">Close</button>
-</div>
+<!-- INFO PAGES DIV -->
+<div id="infoPage" style="display:none;position:fixed;inset:0;background:#0b1220;color:white;overflow:auto;padding:40px;z-index:2000;">
+  <button onclick="closePage()" style="position:fixed;top:20px;right:20px;padding:10px 16px;border:none;border-radius:10px;background:#00ffd5;color:black;font-weight:bold;">Close</button>
+  <div id="infoContent" style="max-width:900px;margin:auto;line-height:1.7;font-size:1rem;"></div>
 </div>
 
-<div style="flex:1;background:#111;padding:10px;overflow:auto">
-<h3>Layers</h3>
-<div id="layers"></div>
-</div>
-</div>
+<!-- ORIGINAL FOOTER -->
+<footer>© 2026 Virexa • Premium 4K & Video Editor</footer>
+
+<!-- NEW FOOTER LINKS -->
+<div class="footer-links">
+  <div>
+    <h3>Support</h3>
+    <ul>
+      <li><a href="#">Help & FAQs</a></li>
+      <li><a href="#">Contact us</a></li>
+      <li><a href="#">Refunds</a></li>
+      <li><a href="#">Platform Status</a></li>
+      <li><a href="#">Resources</a></li>
+    </ul>
+  </div>
+  <div>
+    <h3>Company</h3>
+    <ul>
+      <li><a href="#">Blog</a></li>
+      <li><a href="#">Affiliate Program</a></li>
+      <li><a href="#">Create automatic designs</a></li>
+      <li><a href="#">Video Background Removal</a></li>
+      <li><a href="#">Careers</a></li>
+      <li><a href="#">About us</a></li>
+      <li><a href="#">Press & Partnerships</a></li>
+    </ul>
+  </div>
 </div>
 
 <script>
+// ---------------- ACCOUNTS ----------------
+function signUp(){
+  const u=document.getElementById("signupUser").value.trim();
+  const p=document.getElementById("signupPass").value.trim();
+  if(!u||!p){alert("Enter username and password"); return;}
+  let accounts=JSON.parse(localStorage.getItem("accounts")||"{}");
+  if(accounts[u]){alert("Username already exists"); return;}
+  accounts[u]=p;
+  localStorage.setItem("accounts",JSON.stringify(accounts));
+  alert("Account created! Please login.");
+  showLogin();
+}
+
+function login(){
+  const u=document.getElementById("loginUser").value.trim();
+  const p=document.getElementById("loginPass").value.trim();
+  let accounts=JSON.parse(localStorage.getItem("accounts")||"{}");
+  if(accounts[u] && accounts[u]===p){
+    localStorage.setItem("loggedInUser",u);
+    document.getElementById("loginModal").style.display="none";
+    document.getElementById("site").classList.remove("hidden");
+    load(true);
+  }else{alert("Invalid username or password");}
+}
+
+function showSignUp(){document.getElementById("loginBox").classList.add("hidden");document.getElementById("signUpBox").classList.remove("hidden");}
+function showLogin(){document.getElementById("signUpBox").classList.add("hidden");document.getElementById("loginBox").classList.remove("hidden");}
+
+// ---------------- WALLPAPER ----------------
 const API_KEY="vyynP2WUKfkwPr0BvwJcgRAMxSTkxZ9ZEhdiWBp5q17g2MxAtw4Qlsnx";
-let currentUrl="",isVideo=false;
+let page=1, query="wallpaper", currentImg="";
+const gallery=document.getElementById("gallery");
+const res=document.getElementById("res");
+let favs=[];
 
-/* LOAD IMAGES */
-function loadImages(q="wallpaper"){
-isVideo=false;
-fetch(`https://api.pexels.com/v1/search?query=${q}&per_page=30`,{headers:{Authorization:API_KEY}})
-.then(r=>r.json()).then(d=>{
-gallery.innerHTML="";
-d.photos.forEach(p=>{
-let img=document.createElement("img");
-img.src=p.src.large;
-img.onclick=()=>openPreview(p.src.original,false);
-gallery.appendChild(img);
+async function load(reset=false){
+  if(reset){page=1;gallery.innerHTML=""}
+  try{
+    const r=await fetch(`https://api.pexels.com/v1/search?query=${query}&per_page=15&page=${page}`,{headers:{Authorization:API_KEY}});
+    const d=await r.json();
+    d.photos.forEach(p=>{
+      if(res.value==="4k" && p.width<3840) return;
+      const c=document.createElement("div");
+      c.className="card";
+      c.innerHTML=`<span class="badge">${p.width}×${p.height}</span>
+      <span class="fav">🤍</span>
+      <img src="${p.src.large}" onclick="openPreview('${p.src.original}')">
+      <div class="actions"><button onclick="instantDownload('${p.src.original}')">⬇</button></div>`;
+      c.querySelector(".fav").onclick=()=>{
+        const user=localStorage.getItem("loggedInUser");
+        if(!user){alert("Please login first"); return;}
+        if(favs.includes(p.id)){favs=favs.filter(f=>f!==p.id);}else{favs.push(p.id);}
+        c.querySelector(".fav").textContent=favs.includes(p.id)?"❤️":"🤍";
+        localStorage.setItem("fav_"+user,JSON.stringify(favs));
+      };
+      gallery.appendChild(c);
+    });
+  }catch(e){console.error(e);}
+}
+
+function search(){ query=[q.value,cat.value].filter(Boolean).join(" ")||"wallpaper"; load(true); }
+function showFavs(){
+  gallery.innerHTML="";
+  const user=localStorage.getItem("loggedInUser");
+  if(!user){alert("Please login first"); return;}
+  favs=JSON.parse(localStorage.getItem("fav_"+user)||"[]");
+  favs.forEach(async id=>{
+    const r=await fetch(`https://api.pexels.com/v1/photos/${id}`,{headers:{Authorization:API_KEY}});
+    const p=await r.json();
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`<img src="${p.src.large}" onclick="openPreview('${p.src.original}')"><div class="actions"><button onclick="instantDownload('${p.src.original}')">⬇</button></div>`;
+    gallery.appendChild(c);
+  });
+}
+
+// ---------------- PREVIEW & DOWNLOAD ----------------
+function openPreview(src){currentImg=src;pimg.src=src;preview.style.display="flex";}
+async function instantDownload(url){
+  try{
+    const response=await fetch(url);
+    const blob=await response.blob();
+    const blobUrl=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=blobUrl;
+    a.download="virexa-wallpaper.jpg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  }catch(e){alert("Download failed.");}
+}
+function downloadImage(){instantDownload(currentImg);}
+
+// ---------------- FEATURED ----------------
+document.getElementById("featured").src=`https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?sig=${new Date().getDate()}`;
+
+// ---------------- INFINITE SCROLL ----------------
+window.addEventListener("scroll",()=>{if(innerHeight+scrollY>=document.body.offsetHeight-150){page++;load();}});
+
+// ---------------- INFO PAGES ----------------
+function openPage(page){
+  const box=document.getElementById("infoPage");
+  const content=document.getElementById("infoContent");
+  box.style.display="block";
+  if(page==="about"){content.innerHTML=`<h1>About Virexa</h1><p>High quality wallpapers & video editor.</p>`;}
+  if(page==="privacy"){content.innerHTML=`<h1>Privacy Policy</h1><p>We respect your privacy. Only local storage is used.</p>`;}
+  if(page==="terms"){content.innerHTML=`<h1>Terms & Conditions</h1><p>Use wallpapers & videos for personal use only.</p>`;}
+  if(page==="contact"){content.innerHTML=`<h1>Contact</h1><p>Email: support@virexa.site</p>`;}
+}
+function closePage(){document.getElementById("infoPage").style.display="none";}
+
+// ---------------- VIDEO EDITOR ----------------
+const ffmpeg = createFFmpeg({log:true});
+let videoFile=null;
+
+function openVideoEditor(){document.getElementById("videoEditor").style.display="flex";}
+function closeVideoEditor(){document.getElementById("videoEditor").style.display="none";}
+
+document.getElementById("uploadVideo").addEventListener("change", async (e)=>{
+  videoFile=e.target.files[0];
+  const canvas=document.getElementById("videoCanvas");
+  canvas.getContext("2d").clearRect(0,0,canvas.width,canvas.height);
+  const url=URL.createObjectURL(videoFile);
+  const videoEl=document.createElement("video");
+  videoEl.src=url;
+  videoEl.muted=true;
+  videoEl.autoplay=true;
+  videoEl.loop=true;
+  videoEl.onloadeddata=()=>{canvas.getContext("2d").drawImage(videoEl,0,0,canvas.width,canvas.height);}
 });
+
+async function exportVideo(){
+  if(!videoFile){alert("Upload a video first"); return;}
+  await ffmpeg.load();
+  ffmpeg.FS('writeFile','input.mp4', await fetchFile(videoFile));
+  await ffmpeg.run('-i','input.mp4','output.mp4');
+  const data=ffmpeg.FS('readFile','output.mp4');
+  const url=URL.createObjectURL(new Blob([data.buffer],{type:'video/mp4'}));
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='virexa-video.mp4';
+  a.click();
+}
+
+// ---------------- IMAGE EDITOR ----------------
+let fabricCanvas, currentImage=null, cropping=false, cropRect=null;
+
+function openImageEditor(){
+  document.getElementById("imageEditor").style.display="flex";
+  if(!fabricCanvas) fabricCanvas = new fabric.Canvas('imgCanvas',{ selection:true });
+}
+
+// Upload Image
+document.getElementById('uploadImage').addEventListener('change',(e)=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  const url=URL.createObjectURL(file);
+  fabric.Image.fromURL(url,img=>{
+    currentImage=img;
+    img.set({ left:50, top:50, scaleX:0.8, scaleY:0.8, selectable:true });
+    fabricCanvas.clear();
+    fabricCanvas.add(img);
+    fabricCanvas.setActiveObject(img);
+    fabricCanvas.renderAll();
+  });
 });
+
+function closeImageEditor(){document.getElementById("imageEditor").style.display="none";}
+
+// Image Editor Functions
+function startCrop(){
+  if(!currentImage){alert("Upload an image first"); return;}
+  cropping=true;
+  if(cropRect) fabricCanvas.remove(cropRect);
+  cropRect=new fabric.Rect({ left:100, top:50, width:200, height:200, fill:'rgba(0,255,255,0.3)', stroke:'#00ffd5', strokeWidth:2, selectable:true });
+  fabricCanvas.add(cropRect);
+  fabricCanvas.setActiveObject(cropRect);
 }
 
-/* LOAD VIDEOS */
-function loadVideos(q="nature"){
-isVideo=true;
-fetch(`https://api.pexels.com/videos/search?query=${q}&per_page=20`,{headers:{Authorization:API_KEY}})
-.then(r=>r.json()).then(d=>{
-gallery.innerHTML="";
-d.videos.forEach(v=>{
-let vid=document.createElement("video");
-vid.src=v.video_files[0].link;
-vid.controls=true;
-vid.onclick=()=>openPreview(v.video_files[0].link,true);
-gallery.appendChild(vid);
-});
-});
+function applyCrop(){
+  if(!cropRect || !currentImage){alert("Draw crop area first"); return;}
+  const { left, top, width, height } = cropRect.getBoundingRect();
+  const scaleX=currentImage.scaleX;
+  const scaleY=currentImage.scaleY;
+  const cropped=new fabric.Image(currentImage.getElement(),{
+    left:currentImage.left,
+    top:currentImage.top,
+    scaleX:scaleX,
+    scaleY:scaleY,
+    clipPath:new fabric.Rect({ left:left-currentImage.left, top:top-currentImage.top, width:width, height:height })
+  });
+  fabricCanvas.clear();
+  currentImage=cropped;
+  fabricCanvas.add(cropped);
+  fabricCanvas.renderAll();
+  cropping=false;
+  cropRect=null;
 }
 
-function search(){
-let q=searchBox.value.trim();
-isVideo?loadVideos(q):loadImages(q);
+function rotateImage(){ if(!currentImage) return; currentImage.rotate((currentImage.angle+90)%360); fabricCanvas.renderAll(); }
+function flipImage(){ if(!currentImage) return; currentImage.set('flipX',!currentImage.flipX); fabricCanvas.renderAll(); }
+function addText(){ const text=new fabric.IText('Hello!',{ left:100, top:50, fill:'#00ffd5', fontSize:28, selectable:true }); fabricCanvas.add(text); }
+
+async function removeBg(){
+  if(!currentImage){alert("Upload/select an image first"); return;}
+  const canvasDataUrl=fabricCanvas.toDataURL({format:'png'});
+  const formData=new FormData();
+  formData.append('image_file', await (await fetch(canvasDataUrl)).blob());
+  formData.append('size','auto');
+  const apiKey="oohUokUzCuD5t12RmkGJRBNm";
+  const res=await fetch("https://api.remove.bg/v1.0/removebg",{ method:'POST', headers:{ 'X-Api-Key':apiKey }, body:formData });
+  if(!res.ok){alert("BG removal failed"); return;}
+  const blob=await res.blob();
+  const url=URL.createObjectURL(blob);
+  fabric.Image.fromURL(url,img=>{
+    currentImage=img;
+    fabricCanvas.clear();
+    fabricCanvas.add(img);
+    fabricCanvas.renderAll();
+  });
 }
 
-/* PREVIEW */
-function openPreview(url,video){
-currentUrl=url;isVideo=video;
-preview.style.display="flex";
-prevHolder.innerHTML= video?`<video src="${url}" controls></video>`:`<img src="${url}">`;
+function downloadEditedImage(){
+  const dataURL=fabricCanvas.toDataURL({format:'png'});
+  const a=document.createElement('a');
+  a.href=dataURL;
+  a.download='virexa-edited.png';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
-function closePreview(){preview.style.display="none";}
-
-/* DOWNLOAD */
-async function downloadFile(){
-const r=await fetch(currentUrl);
-const blob=await r.blob();
-const a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="virexa-file";
-a.click();
-}
-
-/* ====== CANVA EDITOR ====== */
-let canvas=document.getElementById("canvas");
-let ctx=canvas.getContext("2d");
-let elements=[],history=[],redoStack=[],selected=null;
-
-function saveState(){history.push(JSON.stringify(elements));redoStack=[];}
-
-function render(){
-ctx.clearRect(0,0,900,500);
-elements.forEach(el=>{
-if(el.type==="image") ctx.drawImage(el.img,el.x,el.y,el.w,el.h);
-else{
-ctx.fillStyle=el.color;
-ctx.font=`${el.size}px ${el.font}`;
-ctx.fillText(el.text,el.x,el.y);
-}
-});
-updateLayers();
-}
-
-function updateLayers(){
-layers.innerHTML="";
-elements.forEach((e,i)=>{
-let d=document.createElement("div");
-d.textContent=e.type+" "+(i+1);
-d.onclick=()=>selected=i;
-layers.appendChild(d);
-});
-}
-
-function openEditor(){
-if(isVideo){alert("Edit thumbnails only");return;}
-editor.style.display="block";
-let img=new Image();
-img.crossOrigin="anonymous";
-img.onload=()=>{
-elements=[{type:"image",img:img,x:0,y:0,w:900,h:500}];
-saveState();render();
-};
-img.src=currentUrl;
-}
-
-function closeEditor(){editor.style.display="none";}
-
-function addText(){
-let t=prompt("Text");
-if(!t)return;
-saveState();
-elements.push({type:"text",text:t,x:100,y:100,size:40,font:fontSelect.value,color:colorPicker.value});
-render();
-}
-
-function addSticker(s){
-saveState();
-elements.push({type:"text",text:s,x:150,y:150,size:70,font:"Arial",color:colorPicker.value});
-render();
-}
-
-canvas.onmousedown=e=>{
-selected=elements.findIndex(el=>e.offsetX>el.x-50&&e.offsetX<el.x+150&&e.offsetY>el.y-50&&e.offsetY<el.y+50);
-};
-canvas.onmousemove=e=>{
-if(selected==null)return;
-elements[selected].x=e.offsetX;
-elements[selected].y=e.offsetY;
-render();
-};
-canvas.onmouseup=()=>selected=null;
-
-function undo(){
-if(history.length<2)return;
-redoStack.push(history.pop());
-elements=JSON.parse(history[history.length-1]);
-render();
-}
-function redo(){
-if(!redoStack.length)return;
-let s=redoStack.pop();
-history.push(s);
-elements=JSON.parse(s);
-render();
-}
-
-function downloadEdited(){
-let a=document.createElement("a");
-a.href=canvas.toDataURL();
-a.download="virexa-design.png";
-a.click();
-}
-
-/* INIT */
-loadImages();
 </script>
 
 </body>
